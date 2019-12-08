@@ -3,7 +3,7 @@ object DayFour {
     fun partOne(start: Int, end: Int): Int {
         var numberOfValidPasscodes = 0
         for (passcodeToTry in start..end) {
-            if (testIncreasingSequence(passcodeToTry) && testForTwoConsecutiveDigits(passcodeToTry)) {
+            if (isAlwaysIncreasingNumber(passcodeToTry) && containsDuplicateNumber(passcodeToTry)) {
                 numberOfValidPasscodes++
             }
         }
@@ -14,7 +14,7 @@ object DayFour {
     fun partTwo(start: Int, end: Int): Int {
         var numberOfValidPasscodes = 0
         for (passcodeToTry in start..end) {
-            if (testIncreasingSequence(passcodeToTry) && testForASingleDouble(passcodeToTry)) {
+            if (isAlwaysIncreasingNumber(passcodeToTry) && hasTwoOfSameNumber(passcodeToTry)) {
                 numberOfValidPasscodes++
             }
         }
@@ -22,25 +22,21 @@ object DayFour {
         return numberOfValidPasscodes
     }
 
-    fun testIncreasingSequence(passcode: Int): Boolean {
+    fun isAlwaysIncreasingNumber(passcode: Int): Boolean {
         // compare the last digit to second to last digit, then use integer division to move further towards the front
-        fun validateLastTwoDigits(number: Int): Boolean {
-            if (number < 10) return true
-            return (number % 10 >= number / 10 % 10) && validateLastTwoDigits(number / 10)
-        }
-
-        return validateLastTwoDigits(passcode)
+        if (passcode< 10) return true
+        return (passcode % 10 >= passcode / 10 % 10) && isAlwaysIncreasingNumber(passcode / 10)
     }
 
     val validDuplicates = listOf("11", "22", "33", "44", "55", "66", "77", "88", "99")
-    fun testForTwoConsecutiveDigits(passcode: Int): Boolean {
+    fun containsDuplicateNumber(passcode: Int): Boolean {
         val passcodeString = passcode.toString()
         return validDuplicates.map {
             passcodeString.contains(it)
         }.reduce(Boolean::or)
     }
 
-    fun testForASingleDouble(passcode: Int): Boolean {
+    fun hasTwoOfSameNumber(passcode: Int): Boolean {
         fun recursiveMatcher(passcode: Int, lastNumber: Int, numberOfTimesInARow: Int): Boolean {
             if (passcode == 0) {
                 // base case, if we made it this far, there needs to be a 2 in numberOfTimesInARow or it fails
