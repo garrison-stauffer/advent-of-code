@@ -11,6 +11,17 @@ object DayFour {
         return numberOfValidPasscodes
     }
 
+    fun partTwo(start: Int, end: Int): Int {
+        var numberOfValidPasscodes = 0
+        for (passcodeToTry in start..end) {
+            if (testIncreasingSequence(passcodeToTry) && testForASingleDouble(passcodeToTry)) {
+                numberOfValidPasscodes++
+            }
+        }
+
+        return numberOfValidPasscodes
+    }
+
     fun testIncreasingSequence(passcode: Int): Boolean {
         // compare the last digit to second to last digit, then use integer division to move further towards the front
         fun validateLastTwoDigits(number: Int): Boolean {
@@ -28,9 +39,30 @@ object DayFour {
             passcodeString.contains(it)
         }.reduce(Boolean::or)
     }
+
+    fun testForASingleDouble(passcode: Int): Boolean {
+        fun recursiveMatcher(passcode: Int, lastNumber: Int, numberOfTimesInARow: Int): Boolean {
+            if (passcode == 0) {
+                // base case, if we made it this far, there needs to be a 2 in numberOfTimesInARow or it fails
+                return numberOfTimesInARow == 2
+            }
+
+            val lastDigit = passcode % 10
+            if (lastDigit == lastNumber) {
+                return recursiveMatcher(passcode / 10, lastDigit, numberOfTimesInARow + 1)
+            } else {
+                return (numberOfTimesInARow == 2)
+                    || recursiveMatcher(passcode / 10, lastDigit, 1)
+            }
+        }
+
+        return recursiveMatcher(passcode, 0, 0)
+    }
 }
 
 fun main() {
-    val numValidPasscodes = DayFour.partOne(183564, 657474)
-    println("Number of valid passcodes: $numValidPasscodes")
+    var numValidPasscodes = DayFour.partOne(183564, 657474)
+    println("Part 1: $numValidPasscodes")
+    numValidPasscodes = DayFour.partTwo(183564, 657474)
+    println("Part 2: $numValidPasscodes")
 }
