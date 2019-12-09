@@ -253,7 +253,7 @@ fun main() {
     }
 
     val point = DayThree.partOne(lineOne, lineTwo)
-    print("Manhattan distance for part one: ${point.calcManhattanDistance()}")
+    print("Manhattan depth for part one: ${point.calcManhattanDistance()}")
 
     val distance = DayThree.partTwo(lineOne, lineTwo)
     print("Closest short-circuit is $distance steps away")
