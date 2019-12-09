@@ -27,41 +27,126 @@ class ImmediateParam(index: Int): Param(index) {
     }
 }
 
+class Program(val memory: MutableList<Int>, var instructionPointer: Int)
+
 abstract class Operation {
-    abstract fun invoke(program: MutableList<Int>)
+    abstract fun invoke(program: Program)
+    abstract fun updateInstructionPointer(program: Program)
 }
 
 class AddOp(val paramOne: Param, val paramTwo: Param, val output: Param): Operation() {
-    override fun invoke(program: MutableList<Int>) {
-        val result = paramOne.readParameter(program) + paramTwo.readParameter(program)
-        output.write(program, result)
+    override fun updateInstructionPointer(program: Program) {
+        program.instructionPointer += 4
+    }
+
+    override fun invoke(program: Program) {
+        val result = paramOne.readParameter(program.memory) + paramTwo.readParameter(program.memory)
+        output.write(program.memory, result)
     }
 }
 
 class MultOp(val paramOne: Param, val paramTwo: Param, val output: Param): Operation() {
-    override fun invoke(program: MutableList<Int>) {
-        val result = paramOne.readParameter(program) * paramTwo.readParameter(program)
-        output.write(program, result)
+    override fun updateInstructionPointer(program: Program) {
+        program.instructionPointer += 4
+    }
+
+    override fun invoke(program: Program) {
+        val result = paramOne.readParameter(program.memory) * paramTwo.readParameter(program.memory)
+        output.write(program.memory, result)
     }
 }
 
 class InputOp(val paramOne: Param): Operation() {
-    override fun invoke(program: MutableList<Int>) {
+    override fun updateInstructionPointer(program: Program) {
+        program.instructionPointer += 2
+    }
+
+    override fun invoke(program: Program) {
         print("[INPUT REQUESTED]: please enter a digit and press enter... ")
         val input = readLine()?.toInt() ?: error("read null value for input")
-        paramOne.write(program, input)
+        paramOne.write(program.memory, input)
     }
 }
 
 class OutputOp(val param: Param): Operation() {
-    override fun invoke(program: MutableList<Int>) {
-        println("[OUTPUT]: ${param.readParameter(program)}")
+    override fun updateInstructionPointer(program: Program) {
+        program.instructionPointer += 2
+    }
+
+    override fun invoke(program: Program) {
+        println("[OUTPUT]: ${param.readParameter(program.memory)}")
+    }
+}
+
+class JumpIfTrueOp(val paramOne: Param, val paramTwo: Param): Operation() {
+    var shouldJumpInstructionPointer: Boolean = false
+
+    override fun invoke(program: Program) {
+        shouldJumpInstructionPointer = paramOne.readParameter(program.memory) != 0
+    }
+
+    override fun updateInstructionPointer(program: Program) {
+        if (shouldJumpInstructionPointer) {
+            val jumpToPointer = paramTwo.readParameter(program.memory)
+            program.instructionPointer = jumpToPointer
+        } else {
+            program.instructionPointer += 3
+        }
+    }
+}
+
+class JumpIfFalseOp(val paramOne: Param, val paramTwo: Param): Operation() {
+    var shouldJumpInstructionPointer: Boolean = false
+
+    override fun invoke(program: Program) {
+        shouldJumpInstructionPointer = paramOne.readParameter(program.memory) == 0
+    }
+
+    override fun updateInstructionPointer(program: Program) {
+        if (shouldJumpInstructionPointer) {
+            val jumpToPointer = paramTwo.readParameter(program.memory)
+            program.instructionPointer = jumpToPointer
+        } else {
+            program.instructionPointer += 3
+        }
+    }
+}
+
+class LessThanOp(val paramOne: Param, val paramTwo: Param, val paramThree: Param): Operation() {
+    override fun invoke(program: Program) {
+        val input1 = paramOne.readParameter(program.memory)
+        val input2 = paramTwo.readParameter(program.memory)
+
+        val result = if (input1 < input2) 1 else 0
+        paramThree.write(program.memory, result)
+    }
+
+    override fun updateInstructionPointer(program: Program) {
+        program.instructionPointer += 4
+    }
+}
+
+class EqualOp(val paramOne: Param, val paramTwo: Param, val paramThree: Param): Operation() {
+    override fun invoke(program: Program) {
+        val input1 = paramOne.readParameter(program.memory)
+        val input2 = paramTwo.readParameter(program.memory)
+
+        val result = if (input1 == input2) 1 else 0
+        paramThree.write(program.memory, result)
+    }
+
+    override fun updateInstructionPointer(program: Program) {
+        program.instructionPointer += 4
     }
 }
 
 class Halt: Operation() {
-    override fun invoke(program: MutableList<Int>) {
-        TODO("shouldn't be called on a halt command")
+    override fun updateInstructionPointer(program: Program) {
+        // no-op
+    }
+
+    override fun invoke(program: Program) {
+        // no-op
     }
 }
 
@@ -70,57 +155,26 @@ object ProgramRunner {
     const val MULT = 2
     const val INPUT = 3
     const val OUTPUT = 4
+    const val JUMP_IF_TRUE = 5
+    const val JUMP_IF_FALSE = 6
+    const val LESS_THAN = 7
+    const val EQUALS = 8
     const val END = 99
 
     const val POSITION_MODE = 0
     const val IMMEDIATE_MODE = 1
 
-    fun runProgram(index: Int, program: MutableList<Int>): Int {
-        val command = program[index]
+    fun runProgram(program: Program): Int {
+        var operation = getNextOperation(program)
 
-        val opcode = command % 100
-        val paramOneMode = (command / 100) % 10
-        val paramTwoMode = (command / 1000) % 10
-        val paramThreeMode = command / 10000
+        while (operation !is Halt) {
+            operation.invoke(program)
+            operation.updateInstructionPointer(program)
 
-        when (opcode) {
-            ADD -> {
-                val paramOne = paramFactory(paramOneMode, index + 1)
-                val paramTwo = paramFactory(paramTwoMode, index + 2)
-                val paramThree = paramFactory(paramThreeMode, index + 3)
-
-                val operation = AddOp(paramOne, paramTwo, paramThree)
-                operation.invoke(program)
-
-                return runProgram(index + 4, program)
-            }
-            MULT -> {
-                val paramOne = paramFactory(paramOneMode, index + 1)
-                val paramTwo = paramFactory(paramTwoMode, index + 2)
-                val paramThree = paramFactory(paramThreeMode, index + 3)
-
-                val operation = MultOp(paramOne, paramTwo, paramThree)
-                operation.invoke(program)
-
-                return runProgram(index + 4, program)
-            }
-            INPUT -> {
-                val paramOne = paramFactory(paramOneMode, index + 1)
-
-                val operation = InputOp(paramOne)
-                operation.invoke(program)
-                return runProgram(index + 2, program)
-            }
-            OUTPUT -> {
-                val paramOne = paramFactory(paramOneMode, index + 1)
-
-                val operation = OutputOp(paramOne)
-                operation.invoke(program)
-                return runProgram(index + 2, program)
-            }
-            END -> return program[0]
-            else -> throw IllegalStateException("Error! Unknown Command $command at paramIndex $index, current state is $program")
+            operation = getNextOperation(program)
         }
+
+        return program.memory[0]
     }
 
     private fun paramFactory(paramMode: Int, index: Int): Param {
@@ -129,5 +183,63 @@ object ProgramRunner {
             IMMEDIATE_MODE -> ImmediateParam(index)
             else -> error("Unrecognized param mode: $paramMode")
         }
+    }
+
+    fun getNextOperation(program: Program): Operation {
+        val index = program.instructionPointer
+        val command = program.memory[index]
+
+        val opcode = command % 100
+
+        return when (opcode) {
+            ADD -> setupTriadOperation(program, ::AddOp)
+            MULT -> setupTriadOperation(program, ::MultOp)
+            INPUT -> setupMonadicOperation(program, ::InputOp)
+            OUTPUT -> setupMonadicOperation(program, ::OutputOp)
+            JUMP_IF_TRUE -> setupDiadicOperation(program, ::JumpIfTrueOp)
+            JUMP_IF_FALSE -> setupDiadicOperation(program, ::JumpIfFalseOp)
+            LESS_THAN -> setupTriadOperation(program, ::LessThanOp)
+            EQUALS -> setupTriadOperation(program, ::EqualOp)
+            END -> return Halt()
+            else -> throw IllegalStateException("Error! Unknown Command $command at paramIndex $index, current state is $program")
+        }
+    }
+
+    fun setupMonadicOperation(program: Program, constructor: (p1: Param) -> Operation): Operation {
+        val index = program.instructionPointer
+        val command = program.memory[index]
+
+        val paramOneMode = (command / 100) % 10
+        val paramOne = paramFactory(paramOneMode, index + 1)
+
+        return constructor(paramOne)
+    }
+
+    fun setupDiadicOperation(program: Program, constructor: (p1: Param, p2: Param) -> Operation): Operation {
+        val index = program.instructionPointer
+        val command = program.memory[index]
+
+        val paramOneMode = (command / 100) % 10
+        val paramTwoMode = (command / 1000) % 10
+
+        val paramOne = paramFactory(paramOneMode, index + 1)
+        val paramTwo = paramFactory(paramTwoMode, index + 2)
+
+        return constructor(paramOne, paramTwo)
+    }
+
+    fun setupTriadOperation(program: Program, constructor: (p1: Param, p2: Param, p3: Param) -> Operation): Operation {
+        val index = program.instructionPointer
+        val command = program.memory[index]
+
+        val paramOneMode = (command / 100) % 10
+        val paramTwoMode = (command / 1000) % 10
+        val paramThreeMode = command / 10000
+
+        val paramOne = paramFactory(paramOneMode, index + 1)
+        val paramTwo = paramFactory(paramTwoMode, index + 2)
+        val paramThree = paramFactory(paramThreeMode, index + 3)
+
+        return constructor(paramOne, paramTwo, paramThree)
     }
 }

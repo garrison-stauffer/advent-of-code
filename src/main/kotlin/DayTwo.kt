@@ -20,7 +20,7 @@ object DayTwo {
         val verb = 70
         program[1] = noun
         program[2] = verb
-        val result = ProgramRunner.runProgram(0, program)
+        val result = ProgramRunner.runProgram(Program(program, 0))
         println("END   problem 1. Result: $result")
     }
 
@@ -36,7 +36,7 @@ object DayTwo {
                 programCopy[1] = noun
                 programCopy[2] = verb
                 try {
-                    ProgramRunner.runProgram(0, programCopy)
+                    ProgramRunner.runProgram(Program(programCopy, 0))
                     if (programCopy[0] == 19690720) {
                         println("Success! $noun & $verb ==> ${100 * noun + verb}")
                         return
