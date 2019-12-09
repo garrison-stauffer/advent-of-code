@@ -33,9 +33,5 @@ object DayFive {
 
 fun main() {
     val program = DayFive.readFile(DayFive.DAY_FIVE_INPUT_FILE_PATH)
-    ProgramRunner.runProgram(Program(program, 0))
-//    var list = mutableListOf(3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,
-//        1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,
-//        999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99)
-//    ProgramRunner.runProgram(Program(list, 0))
+    ProgramRunner.runProgram(Program(program, 0), KeyboardIO())
 }

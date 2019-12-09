@@ -1,5 +1,21 @@
 import java.lang.IllegalStateException
 
+interface IOInterface {
+    fun getInput(): Int
+    fun postOutput(value: Int)
+}
+
+class KeyboardIO: IOInterface {
+    override fun getInput(): Int {
+        print("[INPUT REQUESTED]: please enter a digit and press enter... ")
+        return readLine()?.toInt() ?: error("read null value for input")
+    }
+
+    override fun postOutput(value: Int) {
+        println("[OUTPUT]: $value")
+    }
+}
+
 abstract class Param(val paramIndex: Int) {
     abstract fun readParameter(programMemory: List<Int>): Int
     abstract fun write(programMemory: MutableList<Int>, value: Int)
@@ -56,25 +72,24 @@ class MultOp(val paramOne: Param, val paramTwo: Param, val output: Param): Opera
     }
 }
 
-class InputOp(val paramOne: Param): Operation() {
+class InputOp(val paramOne: Param, val ioInterface: IOInterface): Operation() {
     override fun updateInstructionPointer(program: Program) {
         program.instructionPointer += 2
     }
 
     override fun invoke(program: Program) {
-        print("[INPUT REQUESTED]: please enter a digit and press enter... ")
-        val input = readLine()?.toInt() ?: error("read null value for input")
+        val input = ioInterface.getInput()
         paramOne.write(program.memory, input)
     }
 }
 
-class OutputOp(val param: Param): Operation() {
+class OutputOp(val param: Param, val ioInterface: IOInterface): Operation() {
     override fun updateInstructionPointer(program: Program) {
         program.instructionPointer += 2
     }
 
     override fun invoke(program: Program) {
-        println("[OUTPUT]: ${param.readParameter(program.memory)}")
+        ioInterface.postOutput(param.readParameter(program.memory))
     }
 }
 
@@ -164,14 +179,14 @@ object ProgramRunner {
     const val POSITION_MODE = 0
     const val IMMEDIATE_MODE = 1
 
-    fun runProgram(program: Program): Int {
-        var operation = getNextOperation(program)
+    fun runProgram(program: Program, ioInterface: IOInterface = KeyboardIO()): Int {
+        var operation = getNextOperation(program, ioInterface)
 
         while (operation !is Halt) {
             operation.invoke(program)
             operation.updateInstructionPointer(program)
 
-            operation = getNextOperation(program)
+            operation = getNextOperation(program, ioInterface)
         }
 
         return program.memory[0]
@@ -185,7 +200,7 @@ object ProgramRunner {
         }
     }
 
-    fun getNextOperation(program: Program): Operation {
+    fun getNextOperation(program: Program, ioInterface: IOInterface): Operation {
         val index = program.instructionPointer
         val command = program.memory[index]
 
@@ -194,8 +209,12 @@ object ProgramRunner {
         return when (opcode) {
             ADD -> setupTriadOperation(program, ::AddOp)
             MULT -> setupTriadOperation(program, ::MultOp)
-            INPUT -> setupMonadicOperation(program, ::InputOp)
-            OUTPUT -> setupMonadicOperation(program, ::OutputOp)
+            INPUT -> setupMonadicOperation(program) { param ->
+                InputOp(param, ioInterface)
+            }
+            OUTPUT -> setupMonadicOperation(program) { param ->
+                OutputOp(param, ioInterface)
+            }
             JUMP_IF_TRUE -> setupDiadicOperation(program, ::JumpIfTrueOp)
             JUMP_IF_FALSE -> setupDiadicOperation(program, ::JumpIfFalseOp)
             LESS_THAN -> setupTriadOperation(program, ::LessThanOp)
