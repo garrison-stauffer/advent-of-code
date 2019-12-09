@@ -7,6 +7,8 @@ object DayTwo {
 
     const val ADD = 1
     const val MULT = 2
+    const val INPUT = 3
+    const val OUTPUT = 4
     const val END = 99
 
     fun problemOne() {
@@ -18,7 +20,7 @@ object DayTwo {
         val verb = 70
         program[1] = noun
         program[2] = verb
-        val result = runProgram(0, program)
+        val result = ProgramRunner.runProgram(0, program)
         println("END   problem 1. Result: $result")
     }
 
@@ -34,7 +36,7 @@ object DayTwo {
                 programCopy[1] = noun
                 programCopy[2] = verb
                 try {
-                    runProgram(0, programCopy)
+                    ProgramRunner.runProgram(0, programCopy)
                     if (programCopy[0] == 19690720) {
                         println("Success! $noun & $verb ==> ${100 * noun + verb}")
                         return
@@ -46,34 +48,6 @@ object DayTwo {
         }
 
         println("END   problem 1. ERROR")
-    }
-
-    fun runProgram(index: Int, program: MutableList<Int>): Int {
-        val command = program[index]
-        when (command) {
-            ADD -> {
-                val paramOneIndex = program[index + 1]
-                val paramTwoIndex = program[index + 2]
-                val outputIndex = program[index + 3]
-
-                val paramOne = program[paramOneIndex]
-                val paramTwo = program[paramTwoIndex]
-                program[outputIndex] = paramOne + paramTwo
-                return runProgram(index + 4, program)
-            }
-            MULT -> {
-                val paramOnePointer = program[index + 1]
-                val paramTwoPointer = program[index + 2]
-                val outputIndex = program[index + 3]
-
-                val paramOne = program[paramOnePointer]
-                val paramTwo = program[paramTwoPointer]
-                program[outputIndex] = paramOne * paramTwo
-                return runProgram(index + 4, program)
-            }
-            END -> return program[0]
-            else -> throw IllegalStateException("Error! Unknown Command $command at index $index, current state is $program")
-        }
     }
 }
 
