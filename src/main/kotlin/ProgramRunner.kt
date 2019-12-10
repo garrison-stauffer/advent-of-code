@@ -1,12 +1,12 @@
 import java.lang.IllegalStateException
 
 interface IOInterface {
-    fun getInput(): Int
+    fun fetchInput(): Int
     fun postOutput(value: Int)
 }
 
 class KeyboardIO: IOInterface {
-    override fun getInput(): Int {
+    override fun fetchInput(): Int {
         print("[INPUT REQUESTED]: please enter a digit and press enter... ")
         return readLine()?.toInt() ?: error("read null value for input")
     }
@@ -43,7 +43,7 @@ class ImmediateParam(index: Int): Param(index) {
     }
 }
 
-class Program(val memory: MutableList<Int>, var instructionPointer: Int)
+class Program(val memory: MutableList<Int>, var instructionPointer: Int = 0)
 
 abstract class Operation {
     abstract fun invoke(program: Program)
@@ -78,7 +78,7 @@ class InputOp(val paramOne: Param, val ioInterface: IOInterface): Operation() {
     }
 
     override fun invoke(program: Program) {
-        val input = ioInterface.getInput()
+        val input = ioInterface.fetchInput()
         paramOne.write(program.memory, input)
     }
 }
@@ -179,15 +179,18 @@ object ProgramRunner {
     const val POSITION_MODE = 0
     const val IMMEDIATE_MODE = 1
 
-    fun runProgram(program: Program, ioInterface: IOInterface = KeyboardIO()): Int {
+    fun runProgram(program: Program, ioInterface: IOInterface = KeyboardIO(), tag: String = ""): Int {
         var operation = getNextOperation(program, ioInterface)
 
         while (operation !is Halt) {
+            println("[PROGRAM_$tag]: ${operation::class.simpleName}")
             operation.invoke(program)
             operation.updateInstructionPointer(program)
 
             operation = getNextOperation(program, ioInterface)
         }
+
+        println("Halt command read!")
 
         return program.memory[0]
     }
