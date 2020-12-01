@@ -17,33 +17,56 @@ class KeyboardIO: IOInterface {
 }
 
 abstract class Param(val paramIndex: Int) {
-    abstract fun readParameter(programMemory: List<Int>): Int
-    abstract fun write(programMemory: MutableList<Int>, value: Int)
+    abstract fun readParameter(program: Program): Long
+    abstract fun write(program: Program, value: Long)
 }
 
 class PositionParam(index: Int): Param(index) {
-    override fun write(programMemory: MutableList<Int>, value: Int) {
+    override fun write(program: Program, value: Long) {
+        val programMemory = program.memory
         val indexToWrite = programMemory[paramIndex]
-        programMemory[indexToWrite] = value
+        programMemory[indexToWrite.toInt()] = value
     }
 
-    override fun readParameter(programMemory: List<Int>): Int {
+    override fun readParameter(program: Program): Long {
+        val programMemory = program.memory
         val indexToRead = programMemory[paramIndex]
-        return programMemory[indexToRead]
+        return programMemory[indexToRead.toInt()]
     }
 }
 
 class ImmediateParam(index: Int): Param(index) {
-    override fun write(programMemory: MutableList<Int>, value: Int) {
+    override fun write(program: Program, value: Long) {
         TODO("not implemented, this is not expected to happen")
     }
 
-    override fun readParameter(programMemory: List<Int>): Int {
+    override fun readParameter(program: Program): Long {
+        val programMemory = program.memory
         return programMemory[paramIndex]
     }
 }
 
-class Program(val memory: MutableList<Int>, var instructionPointer: Int = 0)
+class RelativeParam(index: Int): Param(index) {
+    override fun readParameter(program: Program): Long {
+        return program.run {
+            val relativeChange = memory[paramIndex]
+            memory[(relativeBase + relativeChange).toInt()]
+        }
+    }
+
+    override fun write(program: Program, value: Long) {
+        program.apply {
+            val relativeChange = memory[paramIndex]
+            val indexToWriteTo = memory[(relativeBase + relativeChange).toInt()]
+            memory[indexToWriteTo.toInt()] = value
+        }
+    }
+}
+
+class Program(initValues: MutableList<Int> = mutableListOf(), initLongValues: MutableList<Long> = mutableListOf(), var instructionPointer: Int = 0, var relativeBase: Long = 0) {
+    val memory: MutableList<Long> = (initValues.map(Int::toLong) + initLongValues + MutableList(size = 10000, init = { 0L })).toMutableList()
+    val int: Int = 5
+}
 
 abstract class Operation {
     abstract fun invoke(program: Program)
@@ -56,8 +79,8 @@ class AddOp(val paramOne: Param, val paramTwo: Param, val output: Param): Operat
     }
 
     override fun invoke(program: Program) {
-        val result = paramOne.readParameter(program.memory) + paramTwo.readParameter(program.memory)
-        output.write(program.memory, result)
+        val result = paramOne.readParameter(program) + paramTwo.readParameter(program)
+        output.write(program, result)
     }
 }
 
@@ -67,8 +90,8 @@ class MultOp(val paramOne: Param, val paramTwo: Param, val output: Param): Opera
     }
 
     override fun invoke(program: Program) {
-        val result = paramOne.readParameter(program.memory) * paramTwo.readParameter(program.memory)
-        output.write(program.memory, result)
+        val result = paramOne.readParameter(program) * paramTwo.readParameter(program)
+        output.write(program, result)
     }
 }
 
@@ -79,7 +102,7 @@ class InputOp(val paramOne: Param, val ioInterface: IOInterface): Operation() {
 
     override fun invoke(program: Program) {
         val input = ioInterface.fetchInput()
-        paramOne.write(program.memory, input)
+        paramOne.write(program, input)
     }
 }
 
@@ -89,7 +112,7 @@ class OutputOp(val param: Param, val ioInterface: IOInterface): Operation() {
     }
 
     override fun invoke(program: Program) {
-        ioInterface.postOutput(param.readParameter(program.memory))
+        ioInterface.postOutput(param.readParameter(program))
     }
 }
 
@@ -97,12 +120,12 @@ class JumpIfTrueOp(val paramOne: Param, val paramTwo: Param): Operation() {
     var shouldJumpInstructionPointer: Boolean = false
 
     override fun invoke(program: Program) {
-        shouldJumpInstructionPointer = paramOne.readParameter(program.memory) != 0
+        shouldJumpInstructionPointer = paramOne.readParameter(program) != 0
     }
 
     override fun updateInstructionPointer(program: Program) {
         if (shouldJumpInstructionPointer) {
-            val jumpToPointer = paramTwo.readParameter(program.memory)
+            val jumpToPointer = paramTwo.readParameter(program)
             program.instructionPointer = jumpToPointer
         } else {
             program.instructionPointer += 3
@@ -114,12 +137,12 @@ class JumpIfFalseOp(val paramOne: Param, val paramTwo: Param): Operation() {
     var shouldJumpInstructionPointer: Boolean = false
 
     override fun invoke(program: Program) {
-        shouldJumpInstructionPointer = paramOne.readParameter(program.memory) == 0
+        shouldJumpInstructionPointer = paramOne.readParameter(program) == 0
     }
 
     override fun updateInstructionPointer(program: Program) {
         if (shouldJumpInstructionPointer) {
-            val jumpToPointer = paramTwo.readParameter(program.memory)
+            val jumpToPointer = paramTwo.readParameter(program)
             program.instructionPointer = jumpToPointer
         } else {
             program.instructionPointer += 3
@@ -129,11 +152,11 @@ class JumpIfFalseOp(val paramOne: Param, val paramTwo: Param): Operation() {
 
 class LessThanOp(val paramOne: Param, val paramTwo: Param, val paramThree: Param): Operation() {
     override fun invoke(program: Program) {
-        val input1 = paramOne.readParameter(program.memory)
-        val input2 = paramTwo.readParameter(program.memory)
+        val input1 = paramOne.readParameter(program)
+        val input2 = paramTwo.readParameter(program)
 
         val result = if (input1 < input2) 1 else 0
-        paramThree.write(program.memory, result)
+        paramThree.write(program, result)
     }
 
     override fun updateInstructionPointer(program: Program) {
@@ -143,15 +166,28 @@ class LessThanOp(val paramOne: Param, val paramTwo: Param, val paramThree: Param
 
 class EqualOp(val paramOne: Param, val paramTwo: Param, val paramThree: Param): Operation() {
     override fun invoke(program: Program) {
-        val input1 = paramOne.readParameter(program.memory)
-        val input2 = paramTwo.readParameter(program.memory)
+        val input1 = paramOne.readParameter(program)
+        val input2 = paramTwo.readParameter(program)
 
         val result = if (input1 == input2) 1 else 0
-        paramThree.write(program.memory, result)
+        paramThree.write(program, result)
     }
 
     override fun updateInstructionPointer(program: Program) {
         program.instructionPointer += 4
+    }
+}
+
+class UpdateRelativeParam(val paramOne: Param): Operation() {
+    override fun invoke(program: Program) {
+        val input = paramOne.readParameter(program)
+
+        val newRelativeBase = program.relativeBase + input
+        program.relativeBase = newRelativeBase
+    }
+
+    override fun updateInstructionPointer(program: Program) {
+        program.instructionPointer += 2
     }
 }
 
@@ -174,16 +210,18 @@ object ProgramRunner {
     const val JUMP_IF_FALSE = 6
     const val LESS_THAN = 7
     const val EQUALS = 8
+    const val ADJUST_BASE = 9
     const val END = 99
 
     const val POSITION_MODE = 0
     const val IMMEDIATE_MODE = 1
+    const val RELATIVE_MODE = 2
 
     fun runProgram(program: Program, ioInterface: IOInterface = KeyboardIO(), tag: String = ""): Int {
         var operation = getNextOperation(program, ioInterface)
 
         while (operation !is Halt) {
-            println("[PROGRAM_$tag]: ${operation::class.simpleName}")
+//            println("[PROGRAM_$tag]: ${operation::class.simpleName}")
             operation.invoke(program)
             operation.updateInstructionPointer(program)
 
@@ -199,6 +237,7 @@ object ProgramRunner {
         return when (paramMode) {
             POSITION_MODE -> PositionParam(index)
             IMMEDIATE_MODE -> ImmediateParam(index)
+            RELATIVE_MODE -> RelativeParam(index)
             else -> error("Unrecognized param mode: $paramMode")
         }
     }
@@ -222,6 +261,7 @@ object ProgramRunner {
             JUMP_IF_FALSE -> setupDiadicOperation(program, ::JumpIfFalseOp)
             LESS_THAN -> setupTriadOperation(program, ::LessThanOp)
             EQUALS -> setupTriadOperation(program, ::EqualOp)
+            ADJUST_BASE -> setupMonadicOperation(program, ::UpdateRelativeParam)
             END -> return Halt()
             else -> throw IllegalStateException("Error! Unknown Command $command at paramIndex $index, current state is $program")
         }

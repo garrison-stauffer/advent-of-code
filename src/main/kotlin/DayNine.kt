@@ -1,2 +1,11 @@
-class DayNine {
+object DayNine {
+
+    fun partOne() {
+
+    }
+
+}
+
+fun main() {
+    DayNine.partOne()
 }
