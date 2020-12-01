@@ -82,7 +82,7 @@ object DayThree {
                 return point.x == start.x && point.y >= orderedStart.y && point.y <= orderedEnd.y
             }
 
-            return false
+                return false
         }
 
         fun calculateDistanceToPoint(point: Point): Int {

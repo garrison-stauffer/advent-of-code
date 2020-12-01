@@ -35,5 +35,5 @@ object DayFive {
 
 fun main() {
     val program = DayFive.readFile(DayFive.DAY_FIVE_INPUT_FILE_PATH)
-    ProgramRunner.runProgram(Program(program, 0), KeyboardIO())
+//    ProgramRunner.runProgram(Program(program, 0), KeyboardIO())
 }
