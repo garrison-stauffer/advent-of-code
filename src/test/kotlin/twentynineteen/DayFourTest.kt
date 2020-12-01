@@ -1,3 +1,5 @@
+package twentynineteen
+
 import DayFour.hasTwoOfSameNumber
 import DayFour.containsDuplicateNumber
 import DayFour.isAlwaysIncreasingNumber

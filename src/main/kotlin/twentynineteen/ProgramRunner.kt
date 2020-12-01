@@ -101,7 +101,7 @@ class InputOp(val paramOne: Param, val ioInterface: IOInterface): Operation() {
     }
 
     override fun invoke(program: Program) {
-        val input = ioInterface.fetchInput()
+        val input = ioInterface.fetchInput().toLong()
         paramOne.write(program, input)
     }
 }
@@ -112,7 +112,7 @@ class OutputOp(val param: Param, val ioInterface: IOInterface): Operation() {
     }
 
     override fun invoke(program: Program) {
-        ioInterface.postOutput(param.readParameter(program))
+        ioInterface.postOutput(param.readParameter(program).toInt())
     }
 }
 
@@ -120,13 +120,13 @@ class JumpIfTrueOp(val paramOne: Param, val paramTwo: Param): Operation() {
     var shouldJumpInstructionPointer: Boolean = false
 
     override fun invoke(program: Program) {
-        shouldJumpInstructionPointer = paramOne.readParameter(program) != 0
+        shouldJumpInstructionPointer = paramOne.readParameter(program) != 0L
     }
 
     override fun updateInstructionPointer(program: Program) {
         if (shouldJumpInstructionPointer) {
             val jumpToPointer = paramTwo.readParameter(program)
-            program.instructionPointer = jumpToPointer
+            program.instructionPointer = jumpToPointer.toInt()
         } else {
             program.instructionPointer += 3
         }
@@ -137,13 +137,13 @@ class JumpIfFalseOp(val paramOne: Param, val paramTwo: Param): Operation() {
     var shouldJumpInstructionPointer: Boolean = false
 
     override fun invoke(program: Program) {
-        shouldJumpInstructionPointer = paramOne.readParameter(program) == 0
+        shouldJumpInstructionPointer = paramOne.readParameter(program) == 0L
     }
 
     override fun updateInstructionPointer(program: Program) {
         if (shouldJumpInstructionPointer) {
             val jumpToPointer = paramTwo.readParameter(program)
-            program.instructionPointer = jumpToPointer
+            program.instructionPointer = jumpToPointer.toInt()
         } else {
             program.instructionPointer += 3
         }
@@ -155,7 +155,7 @@ class LessThanOp(val paramOne: Param, val paramTwo: Param, val paramThree: Param
         val input1 = paramOne.readParameter(program)
         val input2 = paramTwo.readParameter(program)
 
-        val result = if (input1 < input2) 1 else 0
+        val result = if (input1 < input2) 1L else 0L
         paramThree.write(program, result)
     }
 
@@ -169,7 +169,7 @@ class EqualOp(val paramOne: Param, val paramTwo: Param, val paramThree: Param): 
         val input1 = paramOne.readParameter(program)
         val input2 = paramTwo.readParameter(program)
 
-        val result = if (input1 == input2) 1 else 0
+        val result = if (input1 == input2) 1L else 0L
         paramThree.write(program, result)
     }
 
@@ -202,20 +202,20 @@ class Halt: Operation() {
 }
 
 object ProgramRunner {
-    const val ADD = 1
-    const val MULT = 2
-    const val INPUT = 3
-    const val OUTPUT = 4
-    const val JUMP_IF_TRUE = 5
-    const val JUMP_IF_FALSE = 6
-    const val LESS_THAN = 7
-    const val EQUALS = 8
-    const val ADJUST_BASE = 9
-    const val END = 99
+    const val ADD = 1L
+    const val MULT = 2L
+    const val INPUT = 3L
+    const val OUTPUT = 4L
+    const val JUMP_IF_TRUE = 5L
+    const val JUMP_IF_FALSE = 6L
+    const val LESS_THAN = 7L
+    const val EQUALS = 8L
+    const val ADJUST_BASE = 9L
+    const val END = 99L
 
-    const val POSITION_MODE = 0
-    const val IMMEDIATE_MODE = 1
-    const val RELATIVE_MODE = 2
+    const val POSITION_MODE = 0L
+    const val IMMEDIATE_MODE = 1L
+    const val RELATIVE_MODE = 2L
 
     fun runProgram(program: Program, ioInterface: IOInterface = KeyboardIO(), tag: String = ""): Int {
         var operation = getNextOperation(program, ioInterface)
@@ -230,11 +230,11 @@ object ProgramRunner {
 
         println("Halt command read!")
 
-        return program.memory[0]
+        return program.memory[0].toInt()
     }
 
     private fun paramFactory(paramMode: Int, index: Int): Param {
-        return when (paramMode) {
+        return when (paramMode.toLong()) {
             POSITION_MODE -> PositionParam(index)
             IMMEDIATE_MODE -> ImmediateParam(index)
             RELATIVE_MODE -> RelativeParam(index)
@@ -272,7 +272,7 @@ object ProgramRunner {
         val command = program.memory[index]
 
         val paramOneMode = (command / 100) % 10
-        val paramOne = paramFactory(paramOneMode, index + 1)
+        val paramOne = paramFactory(paramOneMode.toInt(), index + 1)
 
         return constructor(paramOne)
     }
@@ -284,8 +284,8 @@ object ProgramRunner {
         val paramOneMode = (command / 100) % 10
         val paramTwoMode = (command / 1000) % 10
 
-        val paramOne = paramFactory(paramOneMode, index + 1)
-        val paramTwo = paramFactory(paramTwoMode, index + 2)
+        val paramOne = paramFactory(paramOneMode.toInt(), index + 1)
+        val paramTwo = paramFactory(paramTwoMode.toInt(), index + 2)
 
         return constructor(paramOne, paramTwo)
     }
@@ -298,9 +298,9 @@ object ProgramRunner {
         val paramTwoMode = (command / 1000) % 10
         val paramThreeMode = command / 10000
 
-        val paramOne = paramFactory(paramOneMode, index + 1)
-        val paramTwo = paramFactory(paramTwoMode, index + 2)
-        val paramThree = paramFactory(paramThreeMode, index + 3)
+        val paramOne = paramFactory(paramOneMode.toInt(), index + 1)
+        val paramTwo = paramFactory(paramTwoMode.toInt(), index + 2)
+        val paramThree = paramFactory(paramThreeMode.toInt(), index + 3)
 
         return constructor(paramOne, paramTwo, paramThree)
     }

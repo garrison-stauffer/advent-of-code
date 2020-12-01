@@ -1,3 +1,7 @@
+package twentynineteen
+
+import IOInterface
+
 class TestIO: IOInterface {
     val outputs = mutableListOf<Int>()
     override fun fetchInput(): Int {

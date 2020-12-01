@@ -1,3 +1,5 @@
+package twentynineteen
+
 object DayFour {
 
     fun partOne(start: Int, end: Int): Int {
