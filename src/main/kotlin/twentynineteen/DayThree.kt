@@ -5,110 +5,111 @@ import java.io.FileReader
 import kotlin.math.abs
 import kotlin.math.min
 
+data class WireCommand(val direction: Direction, val distance: Int)
+data class Point(val x: Int, val y: Int) {
+    fun createNewPoint(deltaX: Int, deltaY: Int) = Point(x + deltaX, y + deltaY)
+
+    fun calcManhattanDistance() = abs(x) + abs(y)
+}
+
+enum class Direction {
+    UP, DOWN, LEFT, RIGHT
+}
+
+// it will be helpful to ensure lines only go left-to-right or bottom-to-top
+data class Line(val start: Point, val end: Point) {
+    // orderedStart -> orderedEnd will always go to the right, or upwards
+    private val orderedStart: Point
+    private val orderedEnd: Point
+
+    init {
+        if (isVertical()) {
+            if (start.y < end.y) {
+                orderedStart = start
+                orderedEnd = end
+            } else {
+                orderedStart = end
+                orderedEnd = start
+            }
+
+            assert(orderedStart.y < orderedEnd.y) {
+                "$start $end"
+            }
+        } else {
+            if (start.x < end.x) {
+                orderedStart = start
+                orderedEnd = end
+            } else {
+                orderedStart = end
+                orderedEnd = start
+            }
+
+            assert(orderedStart.x < orderedEnd.x) {
+                "ordering failed for: $start $end"
+            }
+        }
+    }
+
+    infix fun intersects(other: Line): Boolean {
+        if (this.isHorizontal() && other.isHorizontal()) return false
+
+        return if (isHorizontal()) {
+            (other.orderedStart.x <= orderedEnd.x && other.orderedStart.x >= orderedStart.x) &&
+                    (other.orderedStart.y <= orderedStart.y && other.orderedEnd.y >= orderedStart.y)
+        } else {
+            (other.orderedStart.x <= orderedEnd.x && other.orderedEnd.x >= orderedEnd.x) &&
+                    (other.orderedStart.y >= orderedStart.y && other.orderedStart.y <= orderedEnd.y)
+        }
+    }
+
+    fun calculateIntersection(other: Line): Point {
+        return if (isHorizontal()) {
+            // must be at the "y" for this line
+            Point(other.start.x, start.y)
+        } else {
+            // must be at the "x" for this line, "y" for the other line
+            Point(start.x, other.start.y)
+        }
+    }
+
+    fun containsPoint(point: Point): Boolean {
+        if (isHorizontal()) {
+            return point.y == start.y && point.x >= orderedStart.x && point.x <= orderedEnd.x
+        } else {
+            return point.x == start.x && point.y >= orderedStart.y && point.y <= orderedEnd.y
+        }
+
+        return false
+    }
+
+    fun calculateDistanceToPoint(point: Point): Int {
+        val length = length()
+        return if (isHorizontal()) {
+            val distanceFromOrderedStart = point.x - orderedStart.x
+            if (orderedStart === start) {
+                distanceFromOrderedStart
+            } else {
+                length - distanceFromOrderedStart
+            }
+        } else {
+            val distanceFromOrderedStart = point.y - orderedStart.y
+            if (orderedStart === start) {
+                distanceFromOrderedStart
+            } else {
+                length - distanceFromOrderedStart
+            }
+        }
+    }
+
+    fun length() = if (isHorizontal()) { orderedEnd.x - orderedStart.x } else { orderedEnd.y - orderedStart.y }
+
+    private fun isHorizontal() = start.y == end.y
+    private fun isVertical() = start.x == end.x
+}
+
+
 object DayThree {
     const val DAY_THREE_FILE_PATH = "/Users/garrisonstauffer/toast/git-repos/advent-of-code/src/main/resources/DayThreeInput.txt"
-
-    enum class Direction {
-        UP, DOWN, LEFT, RIGHT
-    }
-
-    data class WireCommand(val direction: Direction, val distance: Int)
-    data class Point(val x: Int, val y: Int) {
-        fun createNewPoint(deltaX: Int, deltaY: Int) = Point(x + deltaX, y + deltaY)
-
-        fun calcManhattanDistance() = abs(x) + abs(y)
-    }
-
-    // it will be helpful to ensure lines only go left-to-right or bottom-to-top
-    data class Line(val start: Point, val end: Point) {
-        // orderedStart -> orderedEnd will always go to the right, or upwards
-        private val orderedStart: Point
-        private val orderedEnd: Point
-
-        init {
-            if (isVertical()) {
-                if (start.y < end.y) {
-                    orderedStart = start
-                    orderedEnd = end
-                } else {
-                    orderedStart = end
-                    orderedEnd = start
-                }
-
-                assert(orderedStart.y < orderedEnd.y) {
-                    "$start $end"
-                }
-            } else {
-                if (start.x < end.x) {
-                    orderedStart = start
-                    orderedEnd = end
-                } else {
-                    orderedStart = end
-                    orderedEnd = start
-                }
-
-                assert(orderedStart.x < orderedEnd.x) {
-                    "ordering failed for: $start $end"
-                }
-            }
-        }
-
-        infix fun intersects(other: Line): Boolean {
-            if (this.isHorizontal() && other.isHorizontal()) return false
-
-            return if (isHorizontal()) {
-                (other.orderedStart.x <= orderedEnd.x && other.orderedStart.x >= orderedStart.x) &&
-                    (other.orderedStart.y <= orderedStart.y && other.orderedEnd.y >= orderedStart.y)
-            } else {
-                (other.orderedStart.x <= orderedEnd.x && other.orderedEnd.x >= orderedEnd.x) &&
-                    (other.orderedStart.y >= orderedStart.y && other.orderedStart.y <= orderedEnd.y)
-            }
-        }
-
-        fun calculateIntersection(other: Line): Point {
-            return if (isHorizontal()) {
-                // must be at the "y" for this line
-                Point(other.start.x, start.y)
-            } else {
-                // must be at the "x" for this line, "y" for the other line
-                Point(start.x, other.start.y)
-            }
-        }
-
-        fun containsPoint(point: Point): Boolean {
-            if (isHorizontal()) {
-                return point.y == start.y && point.x >= orderedStart.x && point.x <= orderedEnd.x
-            } else {
-                return point.x == start.x && point.y >= orderedStart.y && point.y <= orderedEnd.y
-            }
-
-                return false
-        }
-
-        fun calculateDistanceToPoint(point: Point): Int {
-            val length = length()
-            return if (isHorizontal()) {
-                val distanceFromOrderedStart = point.x - orderedStart.x
-                if (orderedStart === start) {
-                    distanceFromOrderedStart
-                } else {
-                    length - distanceFromOrderedStart
-                }
-            } else {
-                val distanceFromOrderedStart = point.y - orderedStart.y
-                if (orderedStart === start) {
-                    distanceFromOrderedStart
-                } else {
-                    length - distanceFromOrderedStart
-                }
-            }
-        }
-
-        fun length() = if (isHorizontal()) { orderedEnd.x - orderedStart.x } else { orderedEnd.y - orderedStart.y }
-
-        private fun isHorizontal() = start.y == end.y
-        private fun isVertical() = start.x == end.x
-    }
 
     fun partOne(wireOneString: String, wireTwoString: String): Point {
         val wireOneInput = parseLine(wireOneString)
@@ -222,6 +223,7 @@ object DayThree {
                 Direction.DOWN -> 0 to -it.distance
                 Direction.LEFT -> -it.distance to 0
                 Direction.RIGHT -> it.distance to 0
+                else -> error("Unexpected enum value")
             }
 
             currentPoint = currentPoint.createNewPoint(deltaX, deltaY)

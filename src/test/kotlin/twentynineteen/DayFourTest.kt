@@ -1,10 +1,10 @@
 package twentynineteen
 
-import DayFour.hasTwoOfSameNumber
-import DayFour.containsDuplicateNumber
-import DayFour.isAlwaysIncreasingNumber
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import twentynineteen.DayFour.containsDuplicateNumber
+import twentynineteen.DayFour.hasTwoOfSameNumber
+import twentynineteen.DayFour.isAlwaysIncreasingNumber
 
 class DayFourTest {
 

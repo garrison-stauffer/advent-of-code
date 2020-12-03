@@ -20,18 +20,19 @@ data class PasswordRecord(val policy: Policy, val password: String) {
 data class Policy(val first: Int, val second: Int, val mustInclude: Char)
 
 object Day2 {
-    private val part1Input: List<String> = Day2::class.java.getResource("/twentytwenty/day2pt1.txt").readText()
-        .split("\n")
-        .filter(String::isNotBlank)
+    private val part1Input: List<String> = Day2::class.java.getResource("/twentytwenty/day2pt1.txt")
+            .readText()
+            .lines()
+            .filter(String::isNotBlank)
 
     /**
      * Sample input will be like "1-3 a: abcde"
      */
     fun parsePasswordInput(input: String): PasswordRecord {
-val min = input.split(" ")[0].split("-")[0].toInt()
-val most = input.split(" ")[0].split("-")[1].toInt()
-val target = input.split(" ")[1][0]
-val password = input.split(" ")[2]
+        val min = input.split(" ")[0].split("-")[0].toInt()
+        val most = input.split(" ")[0].split("-")[1].toInt()
+        val target = input.split(" ")[1][0]
+        val password = input.split(" ")[2]
 
         val policy = Policy(first = min, second = most, mustInclude = target)
         return PasswordRecord(policy, password)

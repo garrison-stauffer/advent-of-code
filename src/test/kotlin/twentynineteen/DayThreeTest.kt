@@ -3,11 +3,7 @@ package twentynineteen
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
-import DayThree.WireCommand
-import DayThree.Direction.*
-import DayThree.parseLine
-import DayThree.Point
-import DayThree.Line
+import twentynineteen.Direction.*
 
 class DayThreeTest{
 
@@ -26,7 +22,7 @@ class DayThreeTest{
     @Test
     fun `map wire commands to coordinates works as expected`() {
         val sampleInput = "U5,R5,D5,L6"
-        val commands = parseLine(sampleInput)
+        val commands = DayThree.parseLine(sampleInput)
 
         val expectedCoordinates = listOf(
             Point(0, 0), Point(0, 5), Point(5, 5), Point(5, 0), Point(-1, 0)

@@ -16,7 +16,7 @@ object DayFive {
     }
 
     fun partOne() {
-        val program = parseProgram(DAY_FIVE_INPUT_FILE_PATH)
+        parseProgram(DAY_FIVE_INPUT_FILE_PATH)
     }
 
     fun partTwo() {
