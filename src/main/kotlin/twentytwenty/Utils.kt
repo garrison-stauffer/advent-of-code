@@ -1,11 +1,10 @@
 package twentytwenty
 
-fun readFile(day: Int, part: Int = 1): List<String> {
+fun readFile(day: Int, part: Int = 1, removeBlanks: Boolean = true): List<String> {
     val expectedFileName = "/twentytwenty/day${day}pt${part}.txt"
-    return readFile(expectedFileName)
+    return readFile(expectedFileName, removeBlanks = removeBlanks)
 }
 
-fun readFile(qualifiedName: String, resourceLoader: Class<*> = object { }.javaClass): List<String> {
-
-    return resourceLoader.getResource(qualifiedName).readText().lines().filter { it.isNotBlank() }
+fun readFile(qualifiedName: String, resourceLoader: Class<*> = object { }.javaClass, removeBlanks: Boolean): List<String> {
+    return resourceLoader.getResource(qualifiedName).readText().lines().filter { if (removeBlanks) it.isNotBlank() else true }
 }
