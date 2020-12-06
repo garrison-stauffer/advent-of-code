@@ -36,8 +36,8 @@ fun main() {
 
     println(
         """
-            Part 1: $part1Answer
-            Part 2: $part2Answer
+            Part 1: $part1Answer should be 858
+            Part 2: $part2Answer should be 557
         """.trimIndent()
     )
 }
