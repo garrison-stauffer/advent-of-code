@@ -22,6 +22,10 @@ data class Coordinate(val x: Int, val y: Int) {
     fun move(deltaX: Int = 0, deltaY: Int = 0): Coordinate {
         return Coordinate(x + deltaX, y + deltaY)
     }
+
+    fun rotate90DegreesRight(): Coordinate {
+        return Coordinate(y, -x)
+    }
 }
 
 class CursoredMap(val map: TobogganMap, startingPoint: Coordinate, val deltaX: Int, val deltaY: Int) {
