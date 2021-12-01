@@ -1,7 +1,7 @@
-package twentytwenty
+package twentytwentyone
 
 internal fun readFile(day: Int, part: Int = 1, removeBlanks: Boolean = true): List<String> {
-    val expectedFileName = "/twentytwenty/day${day}pt${part}.txt"
+    val expectedFileName = "/twentytwentyone/day${day}pt${part}.txt"
     return readFile(expectedFileName, removeBlanks = removeBlanks)
 }
 
