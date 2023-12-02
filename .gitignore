@@ -1,5 +1,5 @@
-gradle.properties
-gradlew*
-build/**
+**/gradle.properties
+**/gradlew*
+**/build/**
 .idea
-.gradle
+**/.gradle
