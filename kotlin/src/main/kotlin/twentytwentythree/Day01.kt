@@ -12,28 +12,24 @@ object Day01 {
     }
 
     fun problem2(input: List<String>): Long {
-        val trie = buildTrieForDigits()
-        return input.sumOf { parseValueFromLine(it, trie) }
+        return input.sumOf { parseValueFromLine(it, DigitTrie.newInstance()) }
     }
 
     fun parseValueFromLine(input: String, rootTrie: DigitTrie = DigitTrie(' ')): Long {
         var first: Long = -1
         var last: Long = -1
-
         val buffer = mutableListOf<DigitTrie>()
-        buffer.drop(1)
+
         for (char in input) {
-            // need a buffer of characters...
-            var numToDrop = 0
-            var indicesToDrop = mutableListOf<Int>()
+            // store a list of items in the buffer that are no longer valid
+            val indicesToDrop = mutableListOf<Int>()
             for (i in 0 until buffer.size) {
                 val nextNode = buffer[i].nodeForChar(char)
                 if (nextNode == null) {
-                    // this buffer node is no longer valid.. hmm, maybe I actulaly need to
                     indicesToDrop.add(i)
                 } else if (nextNode.value() != null) {
-                    // we found a match - get the value and potentially assign it
-                    // drop it
+                    // we found a match - get the value and potentially
+                    // assign it to first/last, then drop it
                     indicesToDrop.add(i)
                     if (first < 0) {
                         first = nextNode.value()!!
@@ -51,6 +47,7 @@ object Day01 {
             }
 
             rootTrie.nodeForChar(char)?.let {
+                // only store if this is a valid character that should be buffered
                 buffer.add(it)
             }
 
@@ -81,39 +78,38 @@ object Day01 {
         fun value(): Long? {
             return this.value
         }
-    }
 
-    val digits = mapOf(
-        "one" to 1,
-        "two" to 2,
-        "three" to 3,
-        "four" to 4,
-        "five" to 5,
-        "six" to 6,
-        "seven" to 7,
-        "eight" to 8,
-        "nine" to 9
-    )
+        companion object {
+            fun newInstance(): DigitTrie {
+                val digits = mapOf(
+                    "one" to 1,
+                    "two" to 2,
+                    "three" to 3,
+                    "four" to 4,
+                    "five" to 5,
+                    "six" to 6,
+                    "seven" to 7,
+                    "eight" to 8,
+                    "nine" to 9
+                )
 
-    fun buildTrieForDigits(): DigitTrie {
-        val node = DigitTrie(' ')
-        for ((stringValue, numValue) in digits) {
-            var cursor = node
-            for (char in stringValue) {
-                if (cursor.neighbors.containsKey(char)) {
-                    cursor = cursor.neighbors[char]!!
-                } else {
-                    cursor.neighbors[char] = DigitTrie(char)
-                    cursor = cursor.neighbors[char]!!
+                val node = DigitTrie(' ')
+                for ((stringValue, numValue) in digits) {
+                    var cursor = node
+                    for (char in stringValue) {
+                        if (cursor.neighbors.containsKey(char)) {
+                            cursor = cursor.neighbors[char]!!
+                        } else {
+                            cursor.neighbors[char] = DigitTrie(char)
+                            cursor = cursor.neighbors[char]!!
+                        }
+                    }
+                    cursor.value = numValue.toLong()
                 }
+                return node
             }
-            cursor.value = numValue.toLong()
         }
-        return node
     }
-
-
-
 }
 
 fun main() {

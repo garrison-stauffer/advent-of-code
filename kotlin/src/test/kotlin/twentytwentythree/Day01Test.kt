@@ -46,7 +46,7 @@ class Day01Test {
 
     @Test
     fun part2BuildTrie() {
-        val trie = Day01.buildTrieForDigits()
+        val trie = Day01.DigitTrie.newInstance()
         assertThat(trie.hasString("one")).isTrue()
         assertThat(trie.hasString("two")).isTrue()
         assertThat(trie.hasString("three")).isTrue()
