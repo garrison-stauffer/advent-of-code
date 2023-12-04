@@ -164,6 +164,6 @@ fun main() {
     val part1 = Day03.part1(Day03.input)
     val part2 = Day03.part2(Day03.input)
 
-    println("part1 result: $part1")
-    println("part2 result: $part2")
+    println("part1 result: $part1") // 520135
+    println("part2 result: $part2") // 72514855
 }
