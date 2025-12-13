@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"garrison-stauffer.com/advent-of-code/flnt"
 	"github.com/stretchr/testify/require"
-	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -38,17 +38,12 @@ func TestProblem6(t *testing.T) {
 
 		do := Suite(prob.Part2)
 
-		t.Run("do some regex parsing", func(t *testing.T) {
-			rex := regexp.MustCompile(`(\w*\d+\w*)( |^)`)
-			fmt.Println(rex.FindStringSubmatch("123 328  51 64 "))
-		})
-
 		t.Run("provided test cases", func(t *testing.T) {
-			do(t).parsing(flnt.Spl(
+			do(t).parsing(strings.Split(
 				`123 328  51 64 
  45 64  387 23 
   6 98  215 314
-*   +   *   +  `,
+*   +   *   +  `, "\n",
 			)).hasToBe(3263827)
 		})
 	})

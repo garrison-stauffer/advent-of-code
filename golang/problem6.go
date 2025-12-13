@@ -2,6 +2,7 @@ package golang
 
 import (
 	"garrison-stauffer.com/advent-of-code/util"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -64,35 +65,48 @@ func (p *Problem6) Part2(input []string) (int64, error) {
 		inputs    []int64
 		operation func(a, b int64) int64
 	}
-	numProblems := len(strings.Fields(input[0]))
-	subproblems := make([]subproblem, numProblems)
-	for i := range subproblems {
-		subproblems[i] = subproblem{
-			inputs: make([]int64, len(input)-1),
+	subproblems := []subproblem{}
+
+	parseNumber := func(i int) int64 {
+		var value int64 = 0
+		for line := 0; line < len(input)-1; line++ {
+			char := input[line][i]
+			if char == ' ' {
+				continue
+			}
+			value = (value * 10) + int64(char-'0')
 		}
+
+		return value
 	}
 
-	for row := range len(input) - 1 {
-		for problem, operand := range strings.Fields(input[row]) {
-			// reverse it
-			n := 0
-
-			rune := make([]rune, len(operand))
-			for _, r := range operand {
-				rune[n] = r
-				n++
+	isSplit := func(i int) bool {
+		for line := 0; line < len(input)-1; line++ {
+			if input[line][i] != ' ' {
+				return false
 			}
-			rune = rune[0:n]
-			// Reverse
-			for i := 0; i < n/2; i++ {
-				rune[i], rune[n-1-i] = rune[n-1-i], rune[i]
-			}
-			newOperand := string(rune)
-			subproblems[problem].inputs[row] = int64(util.Must(strconv.Atoi(newOperand)))
 		}
+
+		return true
 	}
 
-	for problem, operator := range strings.Fields(input[len(input)-1]) {
+	lineLength := len(input[0])
+	var problem subproblem
+	for i := lineLength - 1; i >= 0; i-- {
+		if isSplit(i) {
+			subproblems = append(subproblems, problem)
+			problem = subproblem{}
+			continue
+		}
+
+		problem.inputs = append(problem.inputs, parseNumber(i))
+	}
+
+	subproblems = append(subproblems, problem)
+
+	arr := strings.Fields(input[len(input)-1])
+	slices.Reverse(arr)
+	for problem, operator := range arr {
 		if operator == "*" {
 			subproblems[problem].operation = p.Multiply
 		} else if operator == "+" {
