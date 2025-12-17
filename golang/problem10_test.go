@@ -16,7 +16,7 @@ func TestProblem10(t *testing.T) {
 		result2, err2 := prob.Part2V2(ReadProblemInput(10, 1))
 
 		require.NoError(t, err)
-		require.NoError(t, err2)
+		require.NoError(t, err2) // 18681
 
 		fmt.Printf("result is %v  %v \n", result, result2)
 	})
