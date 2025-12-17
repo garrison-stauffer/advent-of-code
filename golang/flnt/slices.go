@@ -10,3 +10,10 @@ func SortBy[E any, J cmp.Ordered](extractor func(e E) J) func(e1, e2 E) int {
 		return cmp.Compare(j1, j2)
 	}
 }
+func Sum[E cmp.Ordered](s []E) E {
+	var empty E
+	for _, e := range s {
+		empty += e
+	}
+	return empty
+}
